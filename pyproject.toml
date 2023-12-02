@@ -13,6 +13,32 @@ selenium = "^4.15.2"
 beautifulsoup4 = "^4.12.2"
 
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.6"
+isort = "^5.12.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.isort]
+length_sort = true
+multi_line_output = 3
+line_length = 120

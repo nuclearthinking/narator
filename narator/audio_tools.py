@@ -33,7 +33,7 @@ def convert_to_mp3(file: bytes) -> bytes:
             '16k',
             '-f',
             'mp3',
-            '-'
+            '-',
         ]
         try:
             command_result = subprocess.check_output(command)
@@ -85,7 +85,7 @@ def convert_to_wav(file: bytes) -> bytes:
         return command_result
 
 
-def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> bytes:
+def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> bytes:
     with (
         NamedTemporaryFile('w+b', suffix='.wav') as source1,
         NamedTemporaryFile('w+b', suffix='.wav') as source2,
@@ -97,8 +97,10 @@ def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay:
         command = [
             'ffmpeg',
             '-y',
-            f'-i', source1.name,
-            f'-i', source2.name,
+            '-i',
+            source1.name,
+            '-i',
+            source2.name,
             '-filter_complex',
             f'[0:a]adelay={delay}|{delay}[out1];[1:a]adelay={delay}|{delay}[out2];[out1][out2]concat=n=2:v=0:a=1[a]',
             '-map',
@@ -116,19 +118,69 @@ def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay:
         return result.read()
 
 
+def concat_audio_fragments(*fragments: bytes, delay: int = 500) -> bytes:
+    result = fragments[0]
+    for fragment in fragments[1:]:
+        result = _concat_audio_fragments(result, fragment, delay)
+    return result
+
+
 def clean_audio(wav_bytes):
-    with NamedTemporaryFile(suffix=".wav") as temp_audio_file:
+    with NamedTemporaryFile(suffix='.wav') as temp_audio_file:
         temp_audio_file.write(wav_bytes)
 
         ffmpeg_command = [
-            "ffmpeg",
-            "-i", temp_audio_file.name,
-            "-af", "afftdn=nt=w:wtype=hann",
-            "-af", "compand=attacks=0:points=-90/-900|-45/-15|-27/-9|0/-3:soft-knee=6",
-            "-f", "wav",
-            "-"
+            'ffmpeg',
+            '-i',
+            temp_audio_file.name,
+            '-af',
+            'afftdn=nt=w:wtype=hann',
+            '-af',
+            'compand=attacks=0:points=-90/-900|-45/-15|-27/-9|0/-3:soft-knee=6',
+            '-f',
+            'wav',
+            '-',
         ]
 
         # Execute the FFmpeg command
         cleaned_audio_bytes = subprocess.check_output(ffmpeg_command)
         return cleaned_audio_bytes
+
+
+def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
+    """
+    The ffmpeg command arguments used:
+
+        -y overwrites the output file if it already exists.
+        -i specifies the input file, in this case source.name.
+        -metadata title="Title",artist="Artist" sets the metadata for the output file.
+        -f specifies the output format, in this case mp3.
+
+    :param mp3_bytes:
+    :param title:
+    :param artist:
+    :return: modified mp3 data
+    """
+
+    with NamedTemporaryFile(suffix='.mp3') as temp_mp3_file:
+        temp_mp3_file.write(mp3_bytes)
+
+        ffmpeg_command = [
+            'ffmpeg',
+            '-y',
+            '-i',
+            temp_mp3_file.name,
+            '-metadata',
+            f'title={title}',
+            '-metadata',
+            f'artist={artist}',
+            '-f',
+            'mp3',
+            '-',
+        ]
+        try:
+            command_result = subprocess.check_output(ffmpeg_command)
+        except subprocess.CalledProcessError as e:
+            logger.error('Error while converting file to wav, details: %s', e.stderr)
+            raise Exception(f"Can't convert file to wav, details: {e.stderr}")
+        return command_result
