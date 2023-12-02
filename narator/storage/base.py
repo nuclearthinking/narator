@@ -58,7 +58,8 @@ def add_chapter(chapter_number, text, title, book_id):
 
 def get_chapter(chapter_number, book_id) -> Chapter | None:
     query = sa.select(Chapter).where(Chapter.chapter_number == chapter_number, Chapter.book_id == book_id)
-    return db_session.execute(query).scalar_one_or_none()
+    result = db_session.execute(query).scalar_one_or_none()
+    return result
 
 
 def get_chapters(book_id, chapter_number, limit=10) -> list[Chapter]:

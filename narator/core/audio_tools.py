@@ -17,7 +17,10 @@ def convert_to_mp3(file: bytes) -> bytes:
         -f specifies the output format, in this case mp3.
 
     """
-    with NamedTemporaryFile('w+b') as source:
+    with (
+        NamedTemporaryFile('w+b') as source,
+        NamedTemporaryFile('w+b', suffix='.mp3') as result,
+    ):
         source.write(file)
         source.flush()
         command = [
@@ -33,14 +36,17 @@ def convert_to_mp3(file: bytes) -> bytes:
             '16k',
             '-f',
             'mp3',
-            '-',
+            result.name,
         ]
         try:
-            command_result = subprocess.check_output(command)
+            command_result = subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if command_result.stderr:
+                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
+                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
         except subprocess.CalledProcessError as e:
-            logger.error('Error while converting file to mp3, details: %s', e.stderr)
-            raise Exception(f"Can't convert file to mp3, details: {e.stderr}")
-        return command_result
+            logger.error('Error while converting file to wav, details: %s', e.stderr)
+            raise Exception(f"Can't convert file to wav, details: {e.stderr}")
+        return result.read()
 
 
 def convert_to_wav(file: bytes) -> bytes:
@@ -57,7 +63,10 @@ def convert_to_wav(file: bytes) -> bytes:
         -f specifies the output format, in this case wav.
 
     """
-    with NamedTemporaryFile('w+b') as source:
+    with (
+        NamedTemporaryFile('w+b') as source,
+        NamedTemporaryFile('w+b', suffix='.wav') as result,
+    ):
         source.write(file)
         source.flush()
         command = [
@@ -75,14 +84,22 @@ def convert_to_wav(file: bytes) -> bytes:
             '16k',
             '-f',
             'wav',
-            '-',
+            result.name,
         ]
         try:
-            command_result = subprocess.check_output(command)
+            command_result = subprocess.run(
+                command,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if command_result.stderr:
+                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
+                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
-        return command_result
+        return result.read()
 
 
 def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> bytes:
@@ -108,10 +125,15 @@ def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay
             result.name,
         ]
         try:
-            command_result = subprocess.run(command, check=True)
+            command_result = subprocess.run(
+                command,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             if command_result.stderr:
-                logger.error('Error while converting file to wav, details: %s', result.stderr)
-                raise Exception(f"Can't convert file to wav, details: {result.stderr}")
+                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
+                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
@@ -126,11 +148,15 @@ def concat_audio_fragments(*fragments: bytes, delay: int = 500) -> bytes:
 
 
 def clean_audio(wav_bytes):
-    with NamedTemporaryFile(suffix='.wav') as temp_audio_file:
+    with (
+        NamedTemporaryFile(suffix='.wav') as temp_audio_file,
+        NamedTemporaryFile(suffix='.wav') as cleaned_audio_file,
+    ):
         temp_audio_file.write(wav_bytes)
 
         ffmpeg_command = [
             'ffmpeg',
+            '-y',
             '-i',
             temp_audio_file.name,
             '-af',
@@ -139,12 +165,23 @@ def clean_audio(wav_bytes):
             'compand=attacks=0:points=-90/-900|-45/-15|-27/-9|0/-3:soft-knee=6',
             '-f',
             'wav',
-            '-',
+            cleaned_audio_file.name,
         ]
 
-        # Execute the FFmpeg command
-        cleaned_audio_bytes = subprocess.check_output(ffmpeg_command)
-        return cleaned_audio_bytes
+        try:
+            command_result = subprocess.run(
+                ffmpeg_command,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if command_result.returncode != 0:
+                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
+                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
+        except subprocess.CalledProcessError as e:
+            logger.error('Error while converting file to wav, details: %s', e.stderr)
+            raise Exception(f"Can't convert file to wav, details: {e.stderr}")
+        return cleaned_audio_file.read()
 
 
 def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
@@ -162,7 +199,10 @@ def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
     :return: modified mp3 data
     """
 
-    with NamedTemporaryFile(suffix='.mp3') as temp_mp3_file:
+    with (
+        NamedTemporaryFile(suffix='.mp3') as temp_mp3_file,
+        NamedTemporaryFile(suffix='.mp3') as modified_mp3_file,
+    ):
         temp_mp3_file.write(mp3_bytes)
 
         ffmpeg_command = [
@@ -176,11 +216,19 @@ def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
             f'artist={artist}',
             '-f',
             'mp3',
-            '-',
+            modified_mp3_file.name,
         ]
         try:
-            command_result = subprocess.check_output(ffmpeg_command)
+            command_result = subprocess.run(
+                ffmpeg_command,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if command_result.stderr:
+                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
+                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
-        return command_result
+        return modified_mp3_file.read()

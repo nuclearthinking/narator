@@ -1,13 +1,10 @@
 from tempfile import NamedTemporaryFile
-from rich import print
-from rich.progress import Progress, SpinnerColumn, TextColumn
+
 import torch
 from TTS.api import TTS
+from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from narator.storage.base import get_chapter, save_dubbed_chapter
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2', progress_bar=True).to(device)
 
 
 def split_long_line(character: str, index: int, line: str, _result: list) -> list[str]:
@@ -17,7 +14,7 @@ def split_long_line(character: str, index: int, line: str, _result: list) -> lis
     split_index = line.rfind(' ', 0, 250)
 
     first_part = line[:split_index]
-    second_part = line[split_index + 1:]
+    second_part = line[split_index + 1 :]
     _result.append(first_part)
 
     if len(second_part) > 250:
@@ -28,7 +25,17 @@ def split_long_line(character: str, index: int, line: str, _result: list) -> lis
 
 
 def start_voiceover(start: int, book_id: int):
+    with Progress(
+        SpinnerColumn(),
+        TextColumn('[progress.description]{task.description}'),
+        transient=True,
+    ) as progress:
+        progress.add_task(description='[green]Loading model ...', total=None)
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        model = TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2', progress_bar=False, gpu=True).to(device)
+
     _pointer = start
+
     with Progress(
         SpinnerColumn(),
         TextColumn('[progress.description]{task.description}'),
