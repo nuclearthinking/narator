@@ -17,10 +17,7 @@ def convert_to_mp3(file: bytes) -> bytes:
         -f specifies the output format, in this case mp3.
 
     """
-    with (
-        NamedTemporaryFile('w+b') as source,
-        NamedTemporaryFile('r+b') as result,
-    ):
+    with NamedTemporaryFile('w+b') as source:
         source.write(file)
         source.flush()
         command = [
@@ -36,17 +33,14 @@ def convert_to_mp3(file: bytes) -> bytes:
             '16k',
             '-f',
             'mp3',
-            result.name,
+            '-'
         ]
         try:
-            command_result = subprocess.run(command, check=True)
-            if command_result.stderr:
-                logger.error('Error while converting file to mp3, details: %s', result.stderr)
-                raise Exception(f"Can't convert file to mp3, details: {result.stderr}")
+            command_result = subprocess.check_output(command)
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to mp3, details: %s', e.stderr)
             raise Exception(f"Can't convert file to mp3, details: {e.stderr}")
-        return result.read()
+        return command_result
 
 
 def convert_to_wav(file: bytes) -> bytes:
@@ -63,10 +57,7 @@ def convert_to_wav(file: bytes) -> bytes:
         -f specifies the output format, in this case wav.
 
     """
-    with (
-        NamedTemporaryFile('w+b') as source,
-        NamedTemporaryFile('r+b') as result,
-    ):
+    with NamedTemporaryFile('w+b') as source:
         source.write(file)
         source.flush()
         command = [
@@ -84,21 +75,17 @@ def convert_to_wav(file: bytes) -> bytes:
             '16k',
             '-f',
             'wav',
-            result.name,
+            '-',
         ]
         try:
-            command_result = subprocess.run(command, check=True)
-            if command_result.stderr:
-                logger.error('Error while converting file to wav, details: %s', result.stderr)
-                raise Exception(f"Can't convert file to wav, details: {result.stderr}")
+            command_result = subprocess.check_output(command)
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
-        return result.read()
+        return command_result
 
 
-def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> None:
-    """ffmpeg -i input1.wav -filter_complex "[0:a]adelay=1000|1000[out1];[1:a]adelay=1000|1000[out2];[out1][out2]concat=n=2:v=0:a=1[a]" -map "[a]" output.wav"""
+def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> bytes:
     with (
         NamedTemporaryFile('w+b', suffix='.wav') as source1,
         NamedTemporaryFile('w+b', suffix='.wav') as source2,
@@ -109,10 +96,11 @@ def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay:
 
         command = [
             'ffmpeg',
-            f'-i {source1.name}',
-            f'-i {source2.name}',
+            '-y',
+            f'-i', source1.name,
+            f'-i', source2.name,
             '-filter_complex',
-            f'"[0:a]adelay={delay}|{delay}[out1];[1:a]adelay={delay}|{delay}[out2];[out1][out2]concat=n=2:v=0:a=1[a]"',
+            f'[0:a]adelay={delay}|{delay}[out1];[1:a]adelay={delay}|{delay}[out2];[out1][out2]concat=n=2:v=0:a=1[a]',
             '-map',
             '[a]',
             result.name,
@@ -126,3 +114,21 @@ def concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
         return result.read()
+
+
+def clean_audio(wav_bytes):
+    with NamedTemporaryFile(suffix=".wav") as temp_audio_file:
+        temp_audio_file.write(wav_bytes)
+
+        ffmpeg_command = [
+            "ffmpeg",
+            "-i", temp_audio_file.name,
+            "-af", "afftdn=nt=w:wtype=hann",
+            "-af", "compand=attacks=0:points=-90/-900|-45/-15|-27/-9|0/-3:soft-knee=6",
+            "-f", "wav",
+            "-"
+        ]
+
+        # Execute the FFmpeg command
+        cleaned_audio_bytes = subprocess.check_output(ffmpeg_command)
+        return cleaned_audio_bytes
