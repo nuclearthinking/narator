@@ -64,7 +64,7 @@ def get_chapter(chapter_number, book_id) -> Chapter | None:
 def get_chapters(book_id, chapter_number, limit=10) -> list[Chapter]:
     query = (
         sa.select(Chapter)
-        .where(Chapter.book_id == book_id, Chapter.chapter_number >= chapter_number)
+        .where(Chapter.book_id == book_id, Chapter.chapter_number > chapter_number)
         .order_by(Chapter.chapter_number)
         .limit(limit)
     )

@@ -1,10 +1,12 @@
 import sys
 
-from narator.audio_tools import concat_audio_fragments, clean_audio, convert_to_mp3, modify_mp3_metadata
-from narator.storage import get_chapters
+from narator.storage.base import get_chapters
+from narator.core.audio_tools import clean_audio, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 
 if __name__ == '__main__':
-    while chapters := get_chapters(book_id=1, chapter_number=566, limit=10):
+    start = 565
+    step = 5
+    while chapters := get_chapters(book_id=1, chapter_number=start, limit=step):
         chapters = [c for c in chapters if c.audio]
         if not chapters:
             sys.exit(0)
@@ -13,9 +15,10 @@ if __name__ == '__main__':
         mp3_file = convert_to_mp3(cleaned_file)
         modified_file = modify_mp3_metadata(
             mp3_file,
-            f'{chapters[0].chapter_number} - {chapters[-1].chapter_number + 1}',
+            f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
             'The Mech Touch',
         )
-        file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number + 1} - The Mech Touch.mp3'
+        file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - The Mech Touch.mp3'
         with open(file_name, 'wb') as result_file:
             result_file.write(modified_file)
+        start += step

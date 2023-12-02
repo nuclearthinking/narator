@@ -11,7 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from narator.storage import add_chapter, add_book_if_not_exist
+from narator.storage.base import add_chapter, add_book_if_not_exist
 
 _driver, _service = None, None
 logger = logging.getLogger(__name__)
