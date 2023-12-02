@@ -2,9 +2,6 @@ import typer
 from typer import Typer
 from typing_extensions import Annotated
 
-from narator.core.dubbing import start_voiceover
-from narator.core.exporter import export_chapters
-
 app = Typer()
 
 
@@ -16,6 +13,8 @@ def voiceover(
     book_id: Annotated[int, typer.Argument(help='Id of book to voiceover')],
     start: Annotated[int, typer.Argument(help='From what number of chapter start process of voiceover')],
 ):
+    from narator.core.dubbing import start_voiceover
+
     start_voiceover(book_id=book_id, start=start)
 
 
@@ -28,4 +27,6 @@ def export(
     start: Annotated[int, typer.Argument(help='Chapter number to start exporting dubbed chapters.')],
     step: Annotated[int, typer.Argument(help='How many chapters to export.')],
 ):
+    from narator.core.exporter import export_chapters
+
     export_chapters(book_id=book_id, start=start, step=step)

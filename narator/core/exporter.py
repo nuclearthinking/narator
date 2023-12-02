@@ -1,7 +1,7 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.core.audio_tools import clean_audio, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 from narator.storage.base import get_chapters
+from narator.core.audio_tools import clean_audio, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 
 
 def export_chapters(start: int, step: int, book_id: int):
