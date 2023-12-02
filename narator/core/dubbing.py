@@ -4,7 +4,7 @@ import torch
 from TTS.api import TTS
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.storage.base import get_chapter, save_dubbed_chapter
+from narator.storage.base import get_chapter, save_dubbed_chapter, get_book
 
 
 def split_long_line(character: str, index: int, line: str, _result: list) -> list[str]:
@@ -14,7 +14,7 @@ def split_long_line(character: str, index: int, line: str, _result: list) -> lis
     split_index = line.rfind(' ', 0, 250)
 
     first_part = line[:split_index]
-    second_part = line[split_index + 1 :]
+    second_part = line[split_index + 1:]
     _result.append(first_part)
 
     if len(second_part) > 250:

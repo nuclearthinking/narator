@@ -1,6 +1,6 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.storage.base import get_chapters
+from narator.storage.base import get_chapters, get_book
 from narator.core.audio_tools import clean_audio, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 
 
@@ -12,6 +12,7 @@ def export_chapters(start: int, step: int, book_id: int):
         transient=True,
     ) as progress:
         task_id = progress.add_task(description='[green]Exporting chapters ...', total=None)
+        book = get_book(book_id=book_id)
         while chapters := get_chapters(book_id=book_id, chapter_number=_pointer, limit=step):
             progress.update(
                 task_id,
@@ -26,9 +27,9 @@ def export_chapters(start: int, step: int, book_id: int):
             modified_file = modify_mp3_metadata(
                 mp3_file,
                 f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
-                'The Mech Touch',
+                book.title,
             )
-            file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - The Mech Touch.mp3'
+            file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - {book.title}.mp3'
             with open(file_name, 'wb') as result_file:
                 result_file.write(modified_file)
             _pointer += step

@@ -45,6 +45,11 @@ def add_book_if_not_exist(book_id, title):
         db_session.commit()
 
 
+def get_book(book_id):
+    query = sa.select(Books).where(id=book_id)
+    return db_session.execute(query).scalar_one_or_none()
+
+
 def add_chapter(chapter_number, text, title, book_id):
     query = sa.select(Chapter).where(Chapter.chapter_number == chapter_number, Chapter.book_id == book_id)
     chapter = db_session.execute(query).scalar_one_or_none()
@@ -58,8 +63,7 @@ def add_chapter(chapter_number, text, title, book_id):
 
 def get_chapter(chapter_number, book_id) -> Chapter | None:
     query = sa.select(Chapter).where(Chapter.chapter_number == chapter_number, Chapter.book_id == book_id)
-    result = db_session.execute(query).scalar_one_or_none()
-    return result
+    return db_session.execute(query).scalar_one_or_none()
 
 
 def get_chapters(book_id, chapter_number, limit=10) -> list[Chapter]:
