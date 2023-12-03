@@ -4,7 +4,7 @@ import torch
 from TTS.api import TTS
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.storage.base import get_chapter, save_dubbed_chapter, get_book
+from narator.storage.base import get_next_chapter, save_dubbed_chapter
 
 
 def split_long_line(character: str, index: int, line: str, _result: list) -> list[str]:
@@ -14,7 +14,7 @@ def split_long_line(character: str, index: int, line: str, _result: list) -> lis
     split_index = line.rfind(' ', 0, 250)
 
     first_part = line[:split_index]
-    second_part = line[split_index + 1:]
+    second_part = line[split_index + 1 :]
     _result.append(first_part)
 
     if len(second_part) > 250:
@@ -42,11 +42,8 @@ def start_voiceover(start: int, book_id: int):
         transient=True,
     ) as progress:
         task_id = progress.add_task(description='[green]Processing chapters ...', total=None)
-        while chapter := get_chapter(chapter_number=_pointer, book_id=book_id):
-            if chapter.audio is not None:
-                _pointer += 1
-                continue
-            progress.update(task_id, description=f'[green]Processing chapter {_pointer} ...')
+        while chapter := get_next_chapter(chapter_from=_pointer, book_id=book_id):
+            progress.update(task_id, description=f'[green]Processing chapter {chapter.chapter_number} ...')
             sentences = []
             for line in filter(bool, chapter.text.split('\n')):
                 if len(line) < 250:
@@ -67,4 +64,4 @@ def start_voiceover(start: int, book_id: int):
                     chapter_id=chapter.id,
                     data=wav.read(),
                 )
-            _pointer += 1
+            _pointer = chapter.chapter_number

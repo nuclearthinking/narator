@@ -1,6 +1,8 @@
+import datetime
+
 import sqlalchemy as sa
 from sqlalchemy import Column, String, create_engine
-from sqlalchemy.orm import relationship, sessionmaker, scoped_session, declarative_base
+from sqlalchemy.orm import relationship, selectinload, sessionmaker, scoped_session, declarative_base
 
 engine = create_engine('sqlite:///narator.db')
 
@@ -24,6 +26,7 @@ class Chapter(Base):
     title = Column(String(255), nullable=False)
     book_id = Column(sa.Integer, sa.ForeignKey('books.id'))
     audio = relationship('Audio', backref='chapters', uselist=False, cascade='all, delete-orphan')
+    locked_until = Column(sa.DateTime, nullable=True)
 
 
 class Audio(Base):
@@ -46,7 +49,7 @@ def add_book_if_not_exist(book_id, title):
 
 
 def get_book(book_id):
-    query = sa.select(Books).where(id=book_id)
+    query = sa.select(Books).where(Books.id == book_id)
     return db_session.execute(query).scalar_one_or_none()
 
 
@@ -74,6 +77,26 @@ def get_chapters(book_id, chapter_number, limit=10) -> list[Chapter]:
         .limit(limit)
     )
     return list(db_session.execute(query).scalars().all())
+
+
+def get_next_chapter(book_id: int, chapter_from: int) -> Chapter | None:
+    query = (
+        sa.select(Chapter)
+        .options(selectinload(Chapter.audio))
+        .where(
+            Chapter.book_id == book_id,  # noqa
+            Chapter.chapter_number > chapter_from,  # noqa
+            Chapter.audio == None,  # noqa
+            sa.or_(Chapter.locked_until <= datetime.datetime.utcnow(), Chapter.locked_until.is_(None)),  # noqa
+        )
+        .order_by(Chapter.chapter_number)
+        .limit(1)
+    )
+    result = db_session.execute(query).scalar_one_or_none()
+    if result:
+        result.locked_until = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        db_session.commit()
+    return result
 
 
 def save_dubbed_chapter(chapter_id: int, data: bytes) -> None:
