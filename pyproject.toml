@@ -13,6 +13,7 @@ selenium = "^4.15.2"
 beautifulsoup4 = "^4.12.2"
 typer = { version = "^0.9.0", extras = ["all"] }
 pydantic-settings = "^2.1.0"
+pydub = "^0.25.1"
 
 [build-system]
 requires = ["poetry-core"]
