@@ -33,7 +33,9 @@ class Audio(Base):
     __tablename__ = 'audio'
     id = Column(sa.Integer, primary_key=True)
     chapter_id = Column(sa.Integer, sa.ForeignKey('chapters.id'))
+    book_id = Column(sa.Integer, sa.ForeignKey('books.id'))
     data = Column(sa.LargeBinary, nullable=False)
+    __table_args__ = (sa.UniqueConstraint('chapter_id', 'book_id', name='audio_chapter_id_book_id_uindex'),)
 
 
 Base.metadata.create_all(bind=engine, checkfirst=True)
@@ -99,7 +101,7 @@ def get_next_chapter(book_id: int, chapter_from: int) -> Chapter | None:
     return result
 
 
-def save_dubbed_chapter(chapter_id: int, data: bytes) -> None:
-    audio = Audio(chapter_id=chapter_id, data=data)
+def save_dubbed_chapter(chapter_id: int, book_id: int, data: bytes) -> None:
+    audio = Audio(chapter_id=chapter_id, data=data, book_id=book_id)
     db_session.add(audio)
     db_session.commit()

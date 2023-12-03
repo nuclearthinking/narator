@@ -24,7 +24,7 @@ def split_long_line(character: str, index: int, line: str, _result: list) -> lis
         return _result
 
 
-def start_voiceover(start: int, book_id: int):
+def start_voiceover(book_id: int, start: int = 0):
     with Progress(
         SpinnerColumn(),
         TextColumn('[progress.description]{task.description}'),
@@ -34,15 +34,13 @@ def start_voiceover(start: int, book_id: int):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         model = TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2', progress_bar=False, gpu=True).to(device)
 
-    _pointer = start
-
     with Progress(
         SpinnerColumn(),
         TextColumn('[progress.description]{task.description}'),
         transient=True,
     ) as progress:
         task_id = progress.add_task(description='[green]Processing chapters ...', total=None)
-        while chapter := get_next_chapter(chapter_from=_pointer, book_id=book_id):
+        while chapter := get_next_chapter(book_id=book_id, chapter_from=start):
             progress.update(task_id, description=f'[green]Processing chapter {chapter.chapter_number} ...')
             sentences = []
             for line in filter(bool, chapter.text.split('\n')):
@@ -63,5 +61,5 @@ def start_voiceover(start: int, book_id: int):
                 save_dubbed_chapter(
                     chapter_id=chapter.id,
                     data=wav.read(),
+                    book_id=book_id,
                 )
-            _pointer = chapter.chapter_number
