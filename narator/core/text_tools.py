@@ -18,12 +18,19 @@ def split_line(line: str, limit=250) -> list[str]:
     return result
 
 
+def _is_meaningless_line(line: str) -> bool:
+    return line.strip() == '' or bool(re.match(r'^[\W_]*$', line))
+
+
 def prepare_sentences(input_text: str) -> str:
     sentences = []
     for line in filter(bool, input_text.split('\n')):
+        if _is_meaningless_line(line):
+            continue
         if len(line) < 250:
             sentences.append(line)
             continue
 
         sentences.extend(split_line(line, 250))
+
     return '\n'.join(sentences)

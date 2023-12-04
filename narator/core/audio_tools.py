@@ -2,6 +2,8 @@ import logging
 import subprocess
 from tempfile import NamedTemporaryFile
 
+from pydub import AudioSegment
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,30 +24,8 @@ def convert_to_mp3(file: bytes) -> bytes:
         NamedTemporaryFile('w+b', suffix='.mp3') as result,
     ):
         source.write(file)
-        source.flush()
-        command = [
-            'ffmpeg',
-            '-hide_banner',
-            '-y',
-            '-i',
-            source.name,
-            '-vn',
-            '-ar',
-            '44100',
-            '-ab',
-            '16k',
-            '-f',
-            'mp3',
-            result.name,
-        ]
-        try:
-            command_result = subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if command_result.stderr:
-                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
-                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
-        except subprocess.CalledProcessError as e:
-            logger.error('Error while converting file to wav, details: %s', e.stderr)
-            raise Exception(f"Can't convert file to wav, details: {e.stderr}")
+        segment = AudioSegment.from_wav(source.name)
+        segment.export(result.name, format='mp3')
         return result.read()
 
 
@@ -90,8 +70,8 @@ def convert_to_wav(file: bytes) -> bytes:
             command_result = subprocess.run(
                 command,
                 check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                # stdout=subprocess.DEVNULL,
+                # stderr=subprocess.DEVNULL,
             )
             if command_result.stderr:
                 logger.error('Error while converting file to wav, details: %s', command_result.stderr)
@@ -128,8 +108,8 @@ def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay
             command_result = subprocess.run(
                 command,
                 check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                # stdout=subprocess.DEVNULL,
+                # stderr=subprocess.DEVNULL,
             )
             if command_result.stderr:
                 logger.error('Error while converting file to wav, details: %s', command_result.stderr)
@@ -141,6 +121,8 @@ def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay
 
 
 def concat_audio_fragments(*fragments: bytes, delay: int = 500) -> bytes:
+    if len(fragments) == 1:
+        return fragments[0]
     result = fragments[0]
     for fragment in fragments[1:]:
         result = _concat_audio_fragments(result, fragment, delay)
@@ -214,6 +196,8 @@ def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
             f'title={title}',
             '-metadata',
             f'artist={artist}',
+            '-metadata',
+            f'album={artist}',
             '-f',
             'mp3',
             modified_mp3_file.name,
@@ -231,4 +215,43 @@ def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
+        return modified_mp3_file.read()
+
+
+def add_mp3_cover_art(mp3_bytes, cover_bytes) -> bytes:
+    with (
+        NamedTemporaryFile(suffix='.mp3') as temp_mp3_file,
+        NamedTemporaryFile(suffix='.mp3') as modified_mp3_file,
+        NamedTemporaryFile(suffix='.jpg') as cover,
+    ):
+        temp_mp3_file.write(mp3_bytes)
+        cover.write(cover_bytes)
+        ffmpeg_command = [
+            'ffmpeg',
+            '-y',
+            '-i',
+            temp_mp3_file.name,
+            '-i',
+            cover.name,
+            '-c',
+            'copy',
+            '-map',
+            '0',
+            '-map',
+            '1',
+            modified_mp3_file.name,
+        ]
+        try:
+            command_result = subprocess.run(
+                ffmpeg_command,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if command_result.stderr:
+                logger.error('Error while applying cover to mp3, details: %s', command_result.stderr)
+                raise Exception(f"Can't apply cover to mp3, details: {command_result.stderr}")
+        except subprocess.CalledProcessError as e:
+            logger.error('Error while applying cover to mp3, details: %s', e.stderr)
+            raise Exception(f"Can't apply cover to mp3, details: {e.stderr}")
         return modified_mp3_file.read()

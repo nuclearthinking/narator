@@ -1,7 +1,13 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from narator.storage.base import get_book, get_chapters
-from narator.core.audio_tools import clean_audio, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
+from narator.core.audio_tools import (
+    clean_audio,
+    convert_to_mp3,
+    add_mp3_cover_art,
+    modify_mp3_metadata,
+    concat_audio_fragments,
+)
 
 
 def export_chapters(start: int, step: int, book_id: int):
@@ -21,15 +27,19 @@ def export_chapters(start: int, step: int, book_id: int):
             chapters = [c for c in chapters if c.audio]
             if not chapters or len(chapters) < step:
                 return
-            result_file = concat_audio_fragments(*[c.audio.data for c in chapters])
-            cleaned_file = clean_audio(result_file)
-            mp3_file = convert_to_mp3(cleaned_file)
-            modified_file = modify_mp3_metadata(
-                mp3_file,
-                f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
-                book.title,
+            file = concat_audio_fragments(*[c.audio.data for c in chapters])
+            file = clean_audio(file)
+            file = convert_to_mp3(file)
+            file = modify_mp3_metadata(
+                mp3_bytes=file,
+                title=f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
+                artist=book.title,
+            )
+            file = add_mp3_cover_art(
+                mp3_bytes=file,
+                cover_bytes=open('resources/the_mech_touch_02.jpg', 'rb').read(),
             )
             file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - {book.title}.mp3'
             with open(file_name, 'wb') as result_file:
-                result_file.write(modified_file)
+                result_file.write(file)
             _pointer += step
