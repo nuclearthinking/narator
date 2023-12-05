@@ -70,8 +70,8 @@ def convert_to_wav(file: bytes) -> bytes:
             command_result = subprocess.run(
                 command,
                 check=True,
-                # stdout=subprocess.DEVNULL,
-                # stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
             if command_result.stderr:
                 logger.error('Error while converting file to wav, details: %s', command_result.stderr)
@@ -82,59 +82,44 @@ def convert_to_wav(file: bytes) -> bytes:
         return result.read()
 
 
-def _concat_audio_fragments(first_fragment: bytes, second_fragment: bytes, delay: int = 500) -> bytes:
-    with (
-        NamedTemporaryFile('w+b', suffix='.wav') as source1,
-        NamedTemporaryFile('w+b', suffix='.wav') as source2,
-        NamedTemporaryFile('r+b', suffix='.wav') as result,
-    ):
-        source1.write(first_fragment)
-        source2.write(second_fragment)
+def _to_segment(audio_data: bytes) -> AudioSegment:
+    with NamedTemporaryFile('w+b', suffix='.wav') as t_wav:
+        t_wav.write(audio_data)
+        return AudioSegment.from_wav(t_wav.name)
 
-        command = [
-            'ffmpeg',
-            '-y',
-            '-i',
-            source1.name,
-            '-i',
-            source2.name,
-            '-filter_complex',
-            f'[0:a]adelay={delay}|{delay}[out1];[1:a]adelay={delay}|{delay}[out2];[out1][out2]concat=n=2:v=0:a=1[a]',
-            '-map',
-            '[a]',
-            result.name,
-        ]
-        try:
-            command_result = subprocess.run(
-                command,
-                check=True,
-                # stdout=subprocess.DEVNULL,
-                # stderr=subprocess.DEVNULL,
-            )
-            if command_result.stderr:
-                logger.error('Error while converting file to wav, details: %s', command_result.stderr)
-                raise Exception(f"Can't convert file to wav, details: {command_result.stderr}")
-        except subprocess.CalledProcessError as e:
-            logger.error('Error while converting file to wav, details: %s', e.stderr)
-            raise Exception(f"Can't convert file to wav, details: {e.stderr}")
-        return result.read()
+
+def _from_segment(segment: AudioSegment) -> bytes:
+    with NamedTemporaryFile('w+b', suffix='.wav') as t_wav:
+        segment.export(t_wav.name, format='wav')
+        return t_wav.read()
 
 
 def concat_audio_fragments(*fragments: bytes, delay: int = 500) -> bytes:
     if len(fragments) == 1:
         return fragments[0]
-    result = fragments[0]
+    result = _to_segment(fragments[0])
     for fragment in fragments[1:]:
-        result = _concat_audio_fragments(result, fragment, delay)
-    return result
+        result = result.append(_to_segment(fragment), delay)
+    return _from_segment(result)
 
 
-def clean_audio(wav_bytes):
+def apply_filters(wav_bytes):
     with (
         NamedTemporaryFile(suffix='.wav') as temp_audio_file,
-        NamedTemporaryFile(suffix='.wav') as cleaned_audio_file,
+        NamedTemporaryFile(suffix='.wav') as adjusted_audio,
     ):
         temp_audio_file.write(wav_bytes)
+
+        filters = [
+            'compand=points=-80/-105|-62/-80|-15.4/-15.4|0/-12|20/-7.6:soft-knee=6',
+            'loudnorm=I=-16:LRA=11:TP=-2.5',
+            # 'highpass=f=200',
+            # 'lowpass=f=3000',
+            # 'bass=frequency=100:gain=-50',
+            # 'anlmdn=s=7:p=0.002:r=0.002:m=15:o=o',
+            # 'bandreject=frequency=200:width_type=h:width=200',
+            # 'volume=volume=2',
+        ]
 
         ffmpeg_command = [
             'ffmpeg',
@@ -142,12 +127,10 @@ def clean_audio(wav_bytes):
             '-i',
             temp_audio_file.name,
             '-af',
-            'afftdn=nt=w:wtype=hann',
-            '-af',
-            'compand=attacks=0:points=-90/-900|-45/-15|-27/-9|0/-3:soft-knee=6',
+            ','.join(filters),
             '-f',
             'wav',
-            cleaned_audio_file.name,
+            adjusted_audio.name,
         ]
 
         try:
@@ -163,7 +146,7 @@ def clean_audio(wav_bytes):
         except subprocess.CalledProcessError as e:
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
-        return cleaned_audio_file.read()
+        return adjusted_audio.read()
 
 
 def modify_mp3_metadata(mp3_bytes, title, artist) -> bytes:

@@ -2,7 +2,7 @@ from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from narator.storage.base import get_book, get_chapters
 from narator.core.audio_tools import (
-    clean_audio,
+    apply_filters,
     convert_to_mp3,
     add_mp3_cover_art,
     modify_mp3_metadata,
@@ -27,8 +27,8 @@ def export_chapters(start: int, step: int, book_id: int):
             chapters = [c for c in chapters if c.audio]
             if not chapters or len(chapters) < step:
                 return
-            file = concat_audio_fragments(*[c.audio.data for c in chapters])
-            file = clean_audio(file)
+            file = concat_audio_fragments(*[c.audio.data for c in chapters], delay=1000)
+            file = apply_filters(file)
             file = convert_to_mp3(file)
             file = modify_mp3_metadata(
                 mp3_bytes=file,

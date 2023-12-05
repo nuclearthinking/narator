@@ -41,8 +41,8 @@ def start_voiceover(book_id: int, start: int = 0):
                         line,
                         language='en',
                         file_path=wav.name,
-                        speed=1.1,
-                        speaker_wav='resources/chris_lutkin.wav',
+                        speed=1.15,
+                        speaker_wav='resources/neil_gaiman.wav',
                         split_sentences=False,
                     )
 
