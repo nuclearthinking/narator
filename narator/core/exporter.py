@@ -1,11 +1,6 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.core.audio import (
-    apply_filters,
-    convert_to_mp3,
-    modify_mp3_metadata,
-    concat_audio_fragments,
-)
+from narator.core.audio import apply_filters, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 from narator.storage.base import get_book, get_chapters
 
 

@@ -13,9 +13,9 @@ def voiceover(
     book_id: Annotated[int, typer.Argument(help='Id of book to voiceover')],
     start: Annotated[int, typer.Argument(help='From what number of chapter start process of voiceover')] = 0,
 ):
-    from narator.core.dubbing import start_voiceover
+    from narator.core.narration import narrate
 
-    start_voiceover(book_id=book_id, start=start)
+    narrate(book_id=book_id, start=start)
 
 
 @app.command(

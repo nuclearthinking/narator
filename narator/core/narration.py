@@ -6,10 +6,10 @@ from TTS.api import TTS
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from narator.storage.base import get_next_chapter, save_dubbed_chapter
-from narator.core.text_tools import prepare_sentences
+from narator.core.text_tools import book_iterator
 
 
-def start_voiceover(book_id: int, start: int = 0):
+def narrate(book_id: int, start: int = 0):
     with Progress(
         SpinnerColumn(),
         TextColumn('[progress.description]{task.description}'),
@@ -32,10 +32,9 @@ def start_voiceover(book_id: int, start: int = 0):
         while chapter := get_next_chapter(book_id=book_id, chapter_from=start):
             progress.update(task_id, description=f'[green]Processing chapter {chapter.chapter_number} ...')
 
-            text = prepare_sentences(chapter.text)
-
             segment = None
-            for line in text.split('\n'):
+            delay = 0
+            for line, next_delay in book_iterator(chapter.text, paragraph_delay=500):
                 with NamedTemporaryFile('w+b', suffix='.wav') as wav:
                     model.tts_to_file(
                         line,
@@ -49,7 +48,12 @@ def start_voiceover(book_id: int, start: int = 0):
                     if segment is None:
                         segment = AudioSegment.from_wav(wav.name)
                     else:
+                        segment = segment.append(
+                            AudioSegment.silent(duration=delay, frame_rate=segment.frame_rate),
+                            crossfade=0,
+                        )
                         segment = segment.append(AudioSegment.from_wav(wav.name), crossfade=0)
+                    delay = next_delay
 
             with NamedTemporaryFile('w+b', suffix='.wav') as tmp_wav:
                 segment.export(tmp_wav.name, format='wav')
