@@ -80,12 +80,16 @@ def convert_to_wav(file: bytes, bitrate: str = '16k') -> bytes:
         return result.read()
 
 
-def concat_audio_fragments(*fragments: bytes, delay: int = 500) -> bytes:
+def concat_audio_fragments(*fragments: bytes, delay: int = 0) -> bytes:
     if len(fragments) == 1:
         return fragments[0]
     result = _to_segment(fragments[0])
     for fragment in fragments[1:]:
-        result = result.append(_to_segment(fragment), delay)
+        result = result.append(
+            AudioSegment.silent(duration=delay, frame_rate=result.frame_rate),
+            crossfade=0,
+        )
+        result = result.append(_to_segment(fragment), crossfade=0)
     return _from_segment(result)
 
 

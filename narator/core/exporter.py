@@ -21,7 +21,7 @@ def export_chapters(start: int, step: int, book_id: int):
             chapters = [c for c in chapters if c.audio]
             if not chapters or len(chapters) < step:
                 return
-            file = concat_audio_fragments(*[c.audio.data for c in chapters], delay=1000)
+            file = concat_audio_fragments(*[c.audio.data for c in chapters], delay=3000)
             file = apply_filters(file)
             file = convert_to_mp3(file)
             file = modify_mp3_metadata(
