@@ -1,13 +1,12 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.storage.base import get_book, get_chapters
-from narator.core.audio_tools import (
+from narator.core.audio import (
     apply_filters,
     convert_to_mp3,
-    add_mp3_cover_art,
     modify_mp3_metadata,
     concat_audio_fragments,
 )
+from narator.storage.base import get_book, get_chapters
 
 
 def export_chapters(start: int, step: int, book_id: int):
@@ -34,10 +33,7 @@ def export_chapters(start: int, step: int, book_id: int):
                 mp3_bytes=file,
                 title=f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
                 artist=book.title,
-            )
-            file = add_mp3_cover_art(
-                mp3_bytes=file,
-                cover_bytes=open('resources/the_mech_touch_02.jpg', 'rb').read(),
+                cover=open('resources/the_mech_touch_02.jpg', 'rb').read(),
             )
             file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - {book.title}.mp3'
             with open(file_name, 'wb') as result_file:
