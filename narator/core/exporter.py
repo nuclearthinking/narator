@@ -1,10 +1,10 @@
 from rich.progress import Progress, TextColumn, SpinnerColumn
-
+from rich import print as rich_print
 from narator.core.audio import apply_filters, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
 from narator.storage.base import get_book, get_chapters
 
 
-def export_chapters(start: int, step: int, book_id: int):
+def export_chapters(start: int, step: int, book_id: int, cover_path: str = None):
     _pointer = start
     with Progress(
         SpinnerColumn(),
@@ -19,7 +19,8 @@ def export_chapters(start: int, step: int, book_id: int):
                 description=f'[green]Exporting chapters {chapters[0].chapter_number} - {chapters[-1].chapter_number} ...',
             )
             chapters = [c for c in chapters if c.audio]
-            if not chapters or len(chapters) < step:
+            if not chapters:
+                rich_print('[red]Chapter not found :(.')
                 return
             file = concat_audio_fragments(*[c.audio.data for c in chapters], delay=3000)
             file = apply_filters(file)
@@ -28,7 +29,7 @@ def export_chapters(start: int, step: int, book_id: int):
                 mp3_bytes=file,
                 title=f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}',
                 artist=book.title,
-                cover=open('resources/the_mech_touch_02.jpg', 'rb').read(),
+                cover=open(cover_path, 'rb').read(),
             )
             file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - {book.title}.mp3'
             with open(file_name, 'wb') as result_file:

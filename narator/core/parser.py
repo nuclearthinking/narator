@@ -1,5 +1,6 @@
 import time
 import logging
+from typing import Generator
 
 import bs4
 from selenium import webdriver
@@ -14,6 +15,7 @@ from selenium.webdriver.chrome.service import Service
 from narator.storage.base import add_chapter, add_book_if_not_exist
 
 _driver, _service = None, None
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 CONTENT = '#chr-content'
@@ -41,7 +43,7 @@ def get_driver():
     return _driver
 
 
-def walk_pages(start_url: str):
+def walk_pages(start_url: str) -> Generator[str, None, None]:
     driver = get_driver()
     driver.get(start_url)
     try:

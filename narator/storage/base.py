@@ -14,6 +14,7 @@ Base.query = db_session.query_property()
 class Books(Base):
     __tablename__ = 'books'
     id = Column(sa.Integer, primary_key=True, autoincrement=False)
+    language = Column(sa.Enum('en', 'ru'), nullable=False)
     title = Column(String(100), nullable=False)
     chapters = relationship('Chapter', backref='books')
 
@@ -38,7 +39,8 @@ class Audio(Base):
     __table_args__ = (sa.UniqueConstraint('chapter_id', 'book_id', name='audio_chapter_id_book_id_uindex'),)
 
 
-Base.metadata.create_all(bind=engine, checkfirst=True)
+def initialize_db():
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
 
 def add_book_if_not_exist(book_id, title):
@@ -55,7 +57,7 @@ def get_book(book_id):
     return db_session.execute(query).scalar_one_or_none()
 
 
-def add_chapter(chapter_number, text, title, book_id):
+def add_chapter(chapter_number: int, text: str, title: str, book_id: int):
     query = sa.select(Chapter).where(Chapter.chapter_number == chapter_number, Chapter.book_id == book_id)
     chapter = db_session.execute(query).scalar_one_or_none()
     if chapter:
@@ -101,7 +103,7 @@ def get_next_chapter(book_id: int, chapter_from: int) -> Chapter | None:
     return result
 
 
-def save_dubbed_chapter(chapter_id: int, book_id: int, data: bytes) -> None:
+def save_narrated_chapter(chapter_id: int, book_id: int, data: bytes) -> None:
     audio = Audio(chapter_id=chapter_id, data=data, book_id=book_id)
     db_session.add(audio)
     db_session.commit()
