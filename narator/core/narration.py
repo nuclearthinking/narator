@@ -44,14 +44,7 @@ def narrate_y(
     book_id: int,
     start: int = 0,
 ):
-    with Progress(
-        SpinnerColumn(),
-        TextColumn('[progress.description]{task.description}'),
-        transient=True,
-    ) as progress:
-        progress.add_task(description='[green]Loading model ...', total=None)
-        narrator = YandexNarrator()
-
+    narrator = YandexNarrator()
     with Progress(
         SpinnerColumn(),
         TextColumn('[progress.description]{task.description}'),
