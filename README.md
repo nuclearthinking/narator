@@ -1,4 +1,4 @@
-# Allow to narrate your favorite stories.
+# Allows to narrate your favorite stories.
 
 ## Installation
 ```bash
