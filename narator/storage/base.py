@@ -43,11 +43,11 @@ def initialize_db():
     Base.metadata.create_all(bind=engine, checkfirst=True)
 
 
-def add_book_if_not_exist(book_id, title):
-    query = sa.select(Books).where(id=book_id)
+def add_book_if_not_exist(book_id, title, language: str):
+    query = sa.select(Books).where(Books.id == book_id)
     book = db_session.execute(query).scalar_one_or_none()
     if not book:
-        book = Books(id=book_id, title=title)
+        book = Books(id=book_id, title=title, language=language)
         db_session.add(book)
         db_session.commit()
 

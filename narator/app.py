@@ -2,6 +2,9 @@ import typer
 from typer import Typer
 from typing_extensions import Annotated
 
+from narator.core.enums.narration_language import NarrationLanguage
+from narator.core.enums.parser_mode import ParserMode
+
 app = Typer()
 
 
@@ -56,3 +59,25 @@ def init():
     from narator.storage import base
 
     base.initialize_db()
+
+
+
+@app.command(
+    name='parse',
+    help='Parse book from site.',
+)
+def parse(
+    mode: Annotated[ParserMode, typer.Argument(help='Mode of parsing.')],
+    book_id: Annotated[int, typer.Argument(help='Id of book to parse.')],
+    name: Annotated[str, typer.Argument(help='Name of book.')],
+    language: Annotated[NarrationLanguage, typer.Argument(help='Language of book.')],
+    url: Annotated[str, typer.Argument(help='Url of book to parse.')],
+):
+    from narator.core import parser
+    parser.parse(
+        mode=mode,
+        book_id=book_id,
+        start_url=url,
+        book_name=name,
+        language=language,
+    )
