@@ -24,8 +24,8 @@ class YandexNarrator(BaseNarrator):
     def __init__(
         self,
         characters_limit: int = 4900,
-        paragraph_delay: int = 500,
-        sentence_delay: int = 0,
+        paragraph_delay: int = 1000,
+        sentence_delay: int = 100,
     ):
         self.characters_limit = characters_limit
         self.paragraph_delay = paragraph_delay

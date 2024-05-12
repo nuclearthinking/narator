@@ -39,10 +39,7 @@ def export(
     book_id: Annotated[int, typer.Argument(help='Id of book to export.')],
     start: Annotated[int, typer.Argument(help='Chapter number to start exporting dubbed chapters.')],
     step: Annotated[int, typer.Argument(help='How many chapters to export.')],
-    cover: Annotated[
-        str,
-        typer.Option(help='Path to cover img.'),
-    ] = None,
+    cover: Annotated[str, typer.Option(help='Path to cover img.')] = None,
 ):
     from narator.core.exporter import export_chapters
     if cover is None:

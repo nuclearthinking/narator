@@ -23,24 +23,25 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
             if not chapters:
                 rich_print('[red]Chapter not found :(.')
                 return
+
+            processed_segments = []
+
+            for chapter in chapters:
+                progress.update(
+                    task_id,
+                    description=f'[green]Processing chapter {chapter.chapter_number} ...',
+                )
+                filtered = apply_filters(chapter.audio.data)
+                mp3_converted = convert_to_mp3(filtered)
+                processed_segments.append(mp3_converted)
             progress.update(
                 task_id,
-                description=f'[green]Concatenating chapters {chapters_line} ...'
+                description=f'[green]Concatenating segments ...',
             )
-            file = concat_audio_fragments(*[c.audio.data for c in chapters], delay=3000)
+            file = concat_audio_fragments(*processed_segments, delay=3000, format_='mp3')
             progress.update(
                 task_id,
-                description=f'[green]Applying filters to chapters {chapters_line} ...'
-            )
-            file = apply_filters(file)
-            progress.update(
-                task_id,
-                description=f'[green]Converting chapters {chapters_line} to mp3 ...'
-            )
-            file = convert_to_mp3(file)
-            progress.update(
-                task_id,
-                description=f'[green]Modifying mp3 metadata for chapters {chapters_line} ...'
+                description=f'[green]Modifying metadata ...',
             )
             file = modify_mp3_metadata(
                 mp3_bytes=file,
