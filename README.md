@@ -20,7 +20,7 @@ database structure is easy and intuitive
 - add book to `books` table
 - add chapters to `chapters` table
 
-
+## Narrate your favourite stories 
 ```bash
 # narrate books using command
 narator narrate <book_id> <start_chapter>
