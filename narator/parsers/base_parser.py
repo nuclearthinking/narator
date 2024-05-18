@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Generator
-
+import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -8,11 +8,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from narator.core.enums.narration_language import NarrationLanguage
 from narator.storage.base import add_chapter, add_book_if_not_exist
+from rich import print as pprint
 
 _driver, _service = None, None
 
 
-def get_driver():
+def get_driver(headless: bool = True):
     global _driver, _service
     if not _service:
         _service = Service(executable_path=ChromeDriverManager().install())
@@ -20,8 +21,9 @@ def get_driver():
         options = Options()
         options.set_capability('pageLoadStrategy', 'none')
         options.add_argument('--no-sandbox')
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
+        if headless:
+            options.add_argument('--headless')
+            options.add_argument('--disable-gpu')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--start-maximized')
         options.add_argument('--crash-dumps-dir=/tmp')
@@ -34,7 +36,29 @@ def get_driver():
     return _driver
 
 
+def get_undetected_driver(headless: bool = True):
+    options = Options()
+    options.set_capability('pageLoadStrategy', 'none')
+    options.add_argument('--no-sandbox')
+    if headless:
+        options.add_argument('--headless')
+        options.add_argument('--disable-gpu')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--start-maximized')
+    options.add_argument('--crash-dumps-dir=/tmp')
+    options.add_argument('--disable-crash-reporter')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-logging')
+    options.add_argument('--log-level=3')
+
+    return uc.Chrome()
+
+
 class BaseParser(metaclass=ABCMeta):
+
+    def __init__(self, debug: bool = False):
+        self._debug = debug
+
     @abstractmethod
     def _walk_pages(self, start_url: str) -> Generator[str, None, None]:
         raise NotImplementedError('Not implemented yet')
@@ -44,12 +68,20 @@ class BaseParser(metaclass=ABCMeta):
         raise NotImplementedError('Not implemented yet')
 
     def parse(self, start_url: str, book_id: int, book_name: str, language: NarrationLanguage) -> None:
-        add_book_if_not_exist(book_id=book_id, title=book_name, language=language.value)
+        if not self._debug:
+            add_book_if_not_exist(book_id=book_id, title=book_name, language=language.value)
         for html_data in self._walk_pages(start_url):
             chapter_data = self._parse_page(html_data)
-            add_chapter(
-                book_id=book_id,
-                title=chapter_data['title'],
-                text=chapter_data['text'],
-                chapter_number=chapter_data['chapter_number'],
+            if not self._debug:
+                add_chapter(
+                    book_id=book_id,
+                    title=chapter_data['title'],
+                    text=chapter_data['text'],
+                    chapter_number=chapter_data['chapter_number'],
+                )
+            text_length = len(chapter_data['text'])
+            lines_count = len(chapter_data['text'].split('\n'))
+            pprint(
+                f'[blue] Chapter saved for book {book_name}, chapter '
+                f'{chapter_data["chapter_number"]}, lines: {lines_count}, characters: {text_length}'
             )

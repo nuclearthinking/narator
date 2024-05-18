@@ -33,7 +33,7 @@ class DictionaryFile(dict):
             with open(self._path, 'w') as file:
                 json.dump(data, file)
         except OSError as e:
-            raise UnableToWriteConfigFile('Unable to wrote config file.') from e
+            raise UnableToWriteConfigFile('Unable to write config file.') from e
         except JSONDecodeError as e:
             raise NaratorException('Config data is not valid json.') from e
 
