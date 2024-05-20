@@ -21,10 +21,7 @@ def voiceover(
     narrate(book_id=book_id, start=start)
 
 
-@app.command(
-    name='narrate-y',
-    help='Start narration with Yandex STT engine.'
-)
+@app.command(name='narrate-y', help='Start narration with Yandex STT engine.')
 def voiceover_y(
     book_id: Annotated[int, typer.Argument(help='Id of book to voiceover')],
     start: Annotated[int, typer.Argument(help='From what number of chapter start process of voiceover')] = 0,
@@ -45,6 +42,7 @@ def export(
     cover: Annotated[str, typer.Option(help='Path to cover img.')] = None,
 ):
     from narator.core.exporter import export_chapters
+
     if cover is None:
         cover = 'resources/the_mech_touch_01.jpg'
 
@@ -61,7 +59,6 @@ def init():
     base.initialize_db()
 
 
-
 @app.command(
     name='parse',
     help='Parse book from site.',
@@ -74,6 +71,7 @@ def parse(
     url: Annotated[str, typer.Argument(help='Url of book to parse.')],
 ):
     from narator.core import parser
+
     parser.parse(
         mode=mode,
         book_id=book_id,

@@ -37,7 +37,7 @@ class Fb2Parser(BaseParser):
                         driver.find_element('xpath', self.MODAL_CLOSE_BTN).click()
 
                     next_btn = driver.find_element('xpath', self.NEXT_BUTTON)
-                    driver.execute_script("arguments[0].scrollIntoView();", next_btn)
+                    driver.execute_script('arguments[0].scrollIntoView();', next_btn)
                     next_btn.click()
 
                 except TimeoutException as e:

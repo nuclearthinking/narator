@@ -19,7 +19,7 @@ def split_line(line: str, limit=250) -> list[str]:
     return [s.strip() for s in result]
 
 
-def _is_meaningless_line(line: str) -> bool:
+def is_wordless_line(line: str) -> bool:
     return line.strip() == '' or bool(re.match(r'^[\W_]*$', line))
 
 

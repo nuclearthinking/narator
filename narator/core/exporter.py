@@ -13,6 +13,8 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
     ) as progress:
         task_id = progress.add_task(description='[green]Exporting chapters ...', total=None)
         book = get_book(book_id=book_id)
+        if book.cover:
+            cover_path = book.cover
         while chapters := get_chapters(book_id=book_id, chapter_number=_pointer, limit=step):
             chapters_line = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number}'
             progress.update(
@@ -36,12 +38,12 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
                 processed_segments.append(mp3_converted)
             progress.update(
                 task_id,
-                description=f'[green]Concatenating segments ...',
+                description='[green]Concatenating segments ...',
             )
             file = concat_audio_fragments(*processed_segments, delay=3000, format_='mp3')
             progress.update(
                 task_id,
-                description=f'[green]Modifying metadata ...',
+                description='[green]Modifying metadata ...',
             )
             file = modify_mp3_metadata(
                 mp3_bytes=file,
@@ -50,10 +52,7 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
                 cover=open(cover_path, 'rb').read(),
             )
             file_name = f'{chapters[0].chapter_number} - {chapters[-1].chapter_number} - {book.title}.mp3'
-            progress.update(
-                task_id,
-                description=f'[green]Saving file {file_name} ...'
-            )
+            progress.update(task_id, description=f'[green]Saving file {file_name} ...')
             with open(file_name, 'wb') as result_file:
                 result_file.write(file)
             _pointer += step

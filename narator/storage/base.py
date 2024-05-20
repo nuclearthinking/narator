@@ -17,6 +17,7 @@ class Books(Base):
     language = Column(sa.Enum('en', 'ru'), nullable=False)
     title = Column(String(100), nullable=False)
     chapters = relationship('Chapter', backref='books')
+    cover: str | None = Column(sa.Text, nullable=True)
 
 
 class Chapter(Base):

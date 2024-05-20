@@ -25,10 +25,12 @@ def parse_plain_text_to_chapters(content: str):
     chapter_number = 1
     result = []
     for key, value in chapters.items():
-        result.append({
-            'chapter_number': chapter_number,
-            'text': value,
-            'title': key,
-        })
+        result.append(
+            {
+                'chapter_number': chapter_number,
+                'text': value,
+                'title': key,
+            }
+        )
         chapter_number += 1
     return result

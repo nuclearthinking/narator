@@ -19,7 +19,7 @@ def narrate(
     ) as progress:
         progress.add_task(description='[green]Loading model ...', total=None)
         narrator = CoquiNarrator(
-            narration_artist=NarrationArtists.oleg_keinz,
+            narration_artist=NarrationArtists.chris_lutkin,
         )
 
     with Progress(

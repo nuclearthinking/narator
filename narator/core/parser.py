@@ -20,11 +20,11 @@ def get_parser(parser_mode: ParserMode) -> BaseParser:
 
 
 def parse(
-        mode: ParserMode,
-        start_url: str,
-        book_name: str,
-        book_id: int,
-        language: NarrationLanguage,
+    mode: ParserMode,
+    start_url: str,
+    book_name: str,
+    book_id: int,
+    language: NarrationLanguage,
 ):
     parser = get_parser(mode)
     parser.parse(

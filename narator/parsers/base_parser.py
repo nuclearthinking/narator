@@ -31,7 +31,10 @@ def get_driver(headless: bool = True):
         options.add_argument('--disable-extensions')
         options.add_argument('--disable-logging')
         options.add_argument('--log-level=3')
-        _driver = webdriver.Chrome(service=_service, options=options, )
+        _driver = webdriver.Chrome(
+            service=_service,
+            options=options,
+        )
         _driver.set_page_load_timeout(15)
     return _driver
 
@@ -55,7 +58,6 @@ def get_undetected_driver(headless: bool = True):
 
 
 class BaseParser(metaclass=ABCMeta):
-
     def __init__(self, debug: bool = False):
         self._debug = debug
 

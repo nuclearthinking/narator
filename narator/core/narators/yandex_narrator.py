@@ -1,5 +1,3 @@
-from tempfile import NamedTemporaryFile
-from typing import Generator
 
 from pydub import AudioSegment
 from speechkit import configure_credentials
@@ -11,7 +9,6 @@ from narator.core.text_tools import characters_limited_book_iterator
 from narator.core.narators.base_narrator import BaseNarrator
 from speechkit import model_repository
 
-from narator.core.text_tools import characters_limited_book_iterator
 
 configure_credentials(
     yandex_credentials=creds.YandexCredentials(

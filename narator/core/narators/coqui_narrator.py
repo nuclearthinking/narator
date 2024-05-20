@@ -6,7 +6,7 @@ from TTS.api import TTS
 
 from narator.settings import settings
 from narator.storage.base import Chapter
-from narator.core.text_tools import per_sentence_book_iterator
+from narator.core.text_tools import per_sentence_book_iterator, is_wordless_line
 from narator.core.narators.base_narrator import BaseNarrator
 from narator.core.enums.narration_artists import NarrationArtists
 from narator.core.enums.narration_language import NarrationLanguage
@@ -67,6 +67,8 @@ class CoquiNarrator(BaseNarrator):
         delay = 0
         for text, next_delay in self.chapter_iterator(text=chapter.text):
             with NamedTemporaryFile('w+b', suffix='.wav') as wav:
+                if is_wordless_line(text):
+                    continue
                 self._model.tts_to_file(
                     text,
                     language=self.narration_artist.value.language.value,

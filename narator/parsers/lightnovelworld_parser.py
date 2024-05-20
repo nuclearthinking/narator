@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
-from narator.parsers.base_parser import BaseParser, get_driver, get_undetected_driver
+from narator.parsers.base_parser import BaseParser, get_undetected_driver
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class LightNovelWorldParser(BaseParser):
                         time.sleep(1)
 
                     next_btn = driver.find_element(By.CSS_SELECTOR, self.NEXT_BUTTON)
-                    driver.execute_script("arguments[0].scrollIntoView();", next_btn)
+                    driver.execute_script('arguments[0].scrollIntoView();', next_btn)
                     next_btn.click()
 
                 except TimeoutException as e:
