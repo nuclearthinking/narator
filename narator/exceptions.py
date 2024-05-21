@@ -15,3 +15,7 @@ class UnableToWriteConfigFile(Exception):
 
 class DisplayableException(NaratorException, ClickException):
     """Base class for exceptions that can be displayed to the user"""
+
+
+class UnableToNarrateException(DisplayableException):
+    """Raised when unable to narrate text."""

@@ -29,6 +29,22 @@ def per_sentence_book_iterator(
     paragraph_delay: int = 1000,
     sentence_delay: int = 0,
 ) -> tuple[str, int]:
+    for text, delay in _per_sentence_book_iterator(
+        text,
+        max_sentence_length=max_sentence_length,
+        paragraph_delay=paragraph_delay,
+        sentence_delay=sentence_delay,
+    ):
+        text = preprocess_sentence(text)
+        yield text, delay
+
+
+def _per_sentence_book_iterator(
+    text: str,
+    max_sentence_length: int = 250,
+    paragraph_delay: int = 1000,
+    sentence_delay: int = 0,
+) -> tuple[str, int]:
     paragraphs = text.split('\n')
     paragraphs = filter(bool, paragraphs)
     for line in paragraphs:
@@ -57,6 +73,22 @@ def per_sentence_book_iterator(
 
 
 def characters_limited_book_iterator(
+    text,
+    characters_limit=4900,
+    paragraph_delay=1000,
+    sentence_delay=0,
+) -> tuple[str, int]:
+    for text, delay in _characters_limited_book_iterator(
+        text,
+        characters_limit=characters_limit,
+        paragraph_delay=paragraph_delay,
+        sentence_delay=sentence_delay,
+    ):
+        text = preprocess_sentence(text)
+        yield text, delay
+
+
+def _characters_limited_book_iterator(
     text,
     characters_limit=4900,
     paragraph_delay=1000,
@@ -109,3 +141,33 @@ def split_sentences(text: str, characters_length: int) -> list[str]:
             result.append(line.strip())
             line = sentence
     return result
+
+
+def correct_sentence_endings(text: str) -> str:
+    endings_map = {re.compile(r'\w\."'): ('."', '".'), re.compile(r"\w\.'"): (".'", "'.")}
+    result = []
+    for word in text.split():
+        for pattern, replacement in endings_map.items():
+            if pattern.search(word):
+                word = word.replace(*replacement)
+                break
+        result.append(word)
+    return ' '.join(result)
+
+
+def replace_characters(text: str):
+    char_map = {
+        '’': "'",
+        '‘': "'",
+        '“': '"',
+        '”': '"',
+    }
+    for char, replacement in char_map.items():
+        text = text.replace(char, replacement)
+    return text
+
+
+def preprocess_sentence(text: str) -> str:
+    text = replace_characters(text)
+    text = correct_sentence_endings(text)
+    return text

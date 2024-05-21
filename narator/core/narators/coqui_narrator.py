@@ -5,8 +5,9 @@ from pydub import AudioSegment
 from TTS.api import TTS
 
 from narator.settings import settings
+from narator.exceptions import UnableToNarrateException
 from narator.storage.base import Chapter
-from narator.core.text_tools import per_sentence_book_iterator, is_wordless_line
+from narator.core.text_tools import is_wordless_line, per_sentence_book_iterator
 from narator.core.narators.base_narrator import BaseNarrator
 from narator.core.enums.narration_artists import NarrationArtists
 from narator.core.enums.narration_language import NarrationLanguage
@@ -69,14 +70,21 @@ class CoquiNarrator(BaseNarrator):
             with NamedTemporaryFile('w+b', suffix='.wav') as wav:
                 if is_wordless_line(text):
                     continue
-                self._model.tts_to_file(
-                    text,
-                    language=self.narration_artist.value.language.value,
-                    file_path=wav.name,
-                    speed=1.0,
-                    speaker_wav=self.narration_artist.value.voice_sample_path,
-                    split_sentences=True,
-                )
+                try:
+                    self._model.tts_to_file(
+                        text,
+                        language=self.narration_artist.value.language.value,
+                        file_path=wav.name,
+                        speed=1.0,
+                        speaker_wav=self.narration_artist.value.voice_sample_path,
+                        split_sentences=True,
+                    )
+                except AssertionError as e:
+                    raise UnableToNarrateException(
+                        f'Unable to narrate line: {text}, '
+                        f'book_id: {chapter.book_id}, '
+                        f'chapter_number: {chapter.chapter_number}. Reason: {e}.',
+                    )
                 if segment is None:
                     segment = AudioSegment.from_wav(wav.name)
                     continue

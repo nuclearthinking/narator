@@ -5,8 +5,8 @@ from typing import Generator
 
 import bs4
 from selenium.common import TimeoutException, WebDriverException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from sqlalchemy.testing.plugin.plugin_base import logging
 

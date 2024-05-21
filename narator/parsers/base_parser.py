@@ -1,14 +1,15 @@
 from abc import ABCMeta, abstractmethod
 from typing import Generator
+
 import undetected_chromedriver as uc
+from rich import print as pprint
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
-from narator.core.enums.narration_language import NarrationLanguage
 from narator.storage.base import add_chapter, add_book_if_not_exist
-from rich import print as pprint
+from narator.core.enums.narration_language import NarrationLanguage
 
 _driver, _service = None, None
 

@@ -2,10 +2,10 @@ from tempfile import NamedTemporaryFile
 
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.core.narators.yandex_narrator import YandexNarrator
 from narator.storage.base import get_next_chapter, save_narrated_chapter
 from narator.core.enums.narration_artists import NarrationArtists
 from narator.core.narators.coqui_narrator import CoquiNarrator
+from narator.core.narators.yandex_narrator import YandexNarrator
 
 
 def narrate(

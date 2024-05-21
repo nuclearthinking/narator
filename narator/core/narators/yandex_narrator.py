@@ -1,14 +1,11 @@
-
 from pydub import AudioSegment
-from speechkit import configure_credentials
+from speechkit import model_repository, configure_credentials
 from speechkit.common.utils import creds
 
 from narator.settings import settings
 from narator.storage.base import Chapter
 from narator.core.text_tools import characters_limited_book_iterator
 from narator.core.narators.base_narrator import BaseNarrator
-from speechkit import model_repository
-
 
 configure_credentials(
     yandex_credentials=creds.YandexCredentials(

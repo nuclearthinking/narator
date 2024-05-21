@@ -2,8 +2,8 @@ import typer
 from typer import Typer
 from typing_extensions import Annotated
 
-from narator.core.enums.narration_language import NarrationLanguage
 from narator.core.enums.parser_mode import ParserMode
+from narator.core.enums.narration_language import NarrationLanguage
 
 app = Typer()
 
