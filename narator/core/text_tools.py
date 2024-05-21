@@ -144,12 +144,15 @@ def split_sentences(text: str, characters_length: int) -> list[str]:
 
 
 def correct_sentence_endings(text: str) -> str:
-    endings_map = {re.compile(r'\w\."'): ('."', '".'), re.compile(r"\w\.'"): (".'", "'.")}
+    endings_map = {
+        re.compile(r'\w\."'): ('."', '".'),
+        re.compile(r"\w\.'"): (".'", "'."),
+    }
     result = []
     for word in text.split():
-        for pattern, replacement in endings_map.items():
+        for pattern, (old, new) in endings_map.items():
             if pattern.search(word):
-                word = word.replace(*replacement)
+                word = word.replace(old, new)
                 break
         result.append(word)
     return ' '.join(result)
