@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, wait
 from tempfile import NamedTemporaryFile
 
 from pydub import AudioSegment
@@ -137,6 +138,32 @@ def apply_filters(wav_bytes):
             logger.error('Error while converting file to wav, details: %s', e.stderr)
             raise Exception(f"Can't convert file to wav, details: {e.stderr}")
         return adjusted_audio.read()
+
+
+def apply_filters_async(wav_bytes: list[bytes]) -> list[bytes]:
+    return _do_in_parallel(apply_filters, wav_bytes)
+
+
+def convert_to_mp3_async(wav_bytes: list[bytes]) -> list[bytes]:
+    return _do_in_parallel(convert_to_mp3, wav_bytes)
+
+
+def _do_in_parallel(func, data, threads=10):
+    def _run(item, position):
+        return func(item), position
+
+    result = []
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        futures = []
+        for i, wav in enumerate(data):
+            futures.append(executor.submit(_run, wav, i))
+        done, not_done = wait(futures)
+        if not_done:
+            raise Exception(f'Filed to execute {func}.')
+        for future in done:
+            result.append(future.result())
+    sorted_result = sorted(result, key=lambda x: x[1])
+    return [s[0] for s in sorted_result]
 
 
 def modify_mp3_metadata(mp3_bytes: bytes, title: str, artist: str, cover: bytes) -> bytes:

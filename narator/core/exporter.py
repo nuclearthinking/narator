@@ -1,7 +1,12 @@
 from rich import print as rich_print
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
-from narator.core.audio import apply_filters, convert_to_mp3, modify_mp3_metadata, concat_audio_fragments
+from narator.core.audio import (
+    modify_mp3_metadata,
+    concat_audio_fragments,
+    apply_filters_async,
+    convert_to_mp3_async,
+)
 from narator.storage.base import get_book, get_chapters
 
 
@@ -27,21 +32,23 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
                 rich_print('[red]Chapter not found :(.')
                 return
 
-            processed_segments = []
+            progress.update(
+                task_id,
+                description='[green]Applying filters ...',
+            )
+            filtered_chapters = apply_filters_async([c.audio.data for c in chapters])
 
-            for chapter in chapters:
-                progress.update(
-                    task_id,
-                    description=f'[green]Processing chapter {chapter.chapter_number} ...',
-                )
-                filtered = apply_filters(chapter.audio.data)
-                mp3_converted = convert_to_mp3(filtered)
-                processed_segments.append(mp3_converted)
+            progress.update(
+                task_id,
+                description='[green]Converting to mp3 ...',
+            )
+            mp3_converted = convert_to_mp3_async(filtered_chapters)
+
             progress.update(
                 task_id,
                 description='[green]Concatenating segments ...',
             )
-            file = concat_audio_fragments(*processed_segments, delay=3000, format_='mp3')
+            file = concat_audio_fragments(*mp3_converted, delay=3000, format_='mp3')
             progress.update(
                 task_id,
                 description='[green]Modifying metadata ...',
