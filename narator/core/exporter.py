@@ -4,8 +4,8 @@ from rich.progress import Progress, TextColumn, SpinnerColumn
 from narator.core.audio import (
     modify_mp3_metadata,
     concat_audio_fragments,
-    apply_filters_async,
-    convert_to_mp3_async,
+    apply_filters_multithreaded,
+    convert_to_mp3_multithreaded
 )
 from narator.storage.base import get_book, get_chapters
 
@@ -36,13 +36,13 @@ def export_chapters(start: int, step: int, book_id: int, cover_path: str = None)
                 task_id,
                 description='[green]Applying filters ...',
             )
-            filtered_chapters = apply_filters_async([c.audio.data for c in chapters])
+            filtered_chapters = apply_filters_multithreaded([c.audio.data for c in chapters])
 
             progress.update(
                 task_id,
                 description='[green]Converting to mp3 ...',
             )
-            mp3_converted = convert_to_mp3_async(filtered_chapters)
+            mp3_converted = convert_to_mp3_multithreaded(filtered_chapters)
 
             progress.update(
                 task_id,

@@ -1,7 +1,7 @@
 import logging
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, wait
 from tempfile import NamedTemporaryFile
+from concurrent.futures import ThreadPoolExecutor, wait
 
 from pydub import AudioSegment
 
@@ -140,11 +140,11 @@ def apply_filters(wav_bytes):
         return adjusted_audio.read()
 
 
-def apply_filters_async(wav_bytes: list[bytes]) -> list[bytes]:
+def apply_filters_multithreaded(wav_bytes: list[bytes]) -> list[bytes]:
     return _do_in_parallel(apply_filters, wav_bytes)
 
 
-def convert_to_mp3_async(wav_bytes: list[bytes]) -> list[bytes]:
+def convert_to_mp3_multithreaded(wav_bytes: list[bytes]) -> list[bytes]:
     return _do_in_parallel(convert_to_mp3, wav_bytes)
 
 

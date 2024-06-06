@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Generator
 
-import undetected_chromedriver as uc
+import nodriver as uc
 from rich import print as pprint
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
