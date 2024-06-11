@@ -167,6 +167,8 @@ def _do_in_parallel(func, data, threads=10):
 
 
 def modify_mp3_metadata(mp3_bytes: bytes, title: str, artist: str, cover: bytes) -> bytes:
+    # TODO: change segments to direct ffmpeg command Command:['ffmpeg', '-y', '-f', 'wav', '-i', '/tmp/tmphkezski9', '-i', '/tmp/tmpjr7gztak.jpg', '-map', '0', '-map', '1', '-c:v', 'mjpeg', '-c', 'copy', '-metadata', 'title=376 - 380', '-metadata', 'artist=Lord of the Mysteries (Web Novel)', '-metadata', 'album=Lord of the Mysteries (Web Novel)',
+    # '-id3v2_version', '4', '-f', 'mp3', '/tmp/tmp8yqnvf4y'] using '-c copy' parameter to skip unnecesary encoding
     with NamedTemporaryFile(suffix='.jpg') as cover_file:
         cover_file.write(cover)
 
